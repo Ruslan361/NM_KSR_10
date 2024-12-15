@@ -57,7 +57,7 @@ def plot_heat_equation_results(csv_file, save_3d_plot=False, output_dir="plots")
     ax.set_ylabel('t')
     ax.set_zlabel('Temperature')
     ax.set_title('Heat Equation Results')
-    ax.legend()
+    #ax.legend()
 
     # Function to rotate the view clockwise
     def rotate_clockwise(event):
