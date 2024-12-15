@@ -1,5 +1,5 @@
 #include "heat_solver.h"
-void update_progress_bar1(WINDOW *win, float progress, double remaining_time);
+void update_progress_bar(WINDOW *win, float progress, double remaining_time);
 
 
 
@@ -320,7 +320,7 @@ void solve(HeatEquationSolver* solver, WINDOW* win, clock_t start_time) {
         double estimated_total = elapsed / progress;
         double remaining = estimated_total - elapsed;
 
-        update_progress_bar1(win, progress, remaining);
+        update_progress_bar(win, progress, remaining);
     }
 }
 

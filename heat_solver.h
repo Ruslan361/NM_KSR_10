@@ -26,4 +26,4 @@ void calculate_coefficients(HeatEquationSolver* solver, double *a, double *b, do
 // void solve(HeatEquationSolver* solver);
 void print_results(HeatEquationSolver* solver);
 void solve(HeatEquationSolver* solver, WINDOW* win, clock_t start_time);
-void update_progress_bar1(WINDOW *win, float progress, double remaining_time);
+void update_progress_bar(WINDOW *win, float progress, double remaining_time);
