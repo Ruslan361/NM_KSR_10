@@ -25,6 +25,7 @@ void display_data_format2(HeatEquationSolver* solver, WINDOW *data_win);
 void display_data_with_range(HeatEquationSolver* solver, WINDOW *menu_win);
 void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win);
 void analyze_data(HeatEquationSolver* solver, WINDOW *menu_win);
+void compare_solutions_with_different_grids();
 
 // Main function
 int main() {
@@ -46,7 +47,7 @@ int main() {
     WINDOW *menu_win = newwin(height, width, starty, startx);
     keypad(menu_win, TRUE);
 
-    #define NUM_CHOICES 13
+    #define NUM_CHOICES 14
     char *choices[NUM_CHOICES] = {
         "1. Set parameters n, m, T",
         "2. Start Computation",
@@ -60,7 +61,8 @@ int main() {
         "10. Exit",
         "11. Display Data with Range Selection",
         "12. Search Data by Time",
-        "13. Analyze Data"
+        "13. Analyze Data",
+        "14. Compare Solutions with Different Grids"
     };
 
     int choice = 0;
@@ -330,6 +332,10 @@ int main() {
                 }
                 else if(choice == 13) {
                     analyze_data(solver, menu_win);
+                    refresh();
+                }
+                else if(choice == 14) {
+                    compare_solutions_with_different_grids();
                     refresh();
                 }
                 break;
@@ -864,5 +870,91 @@ void analyze_data(HeatEquationSolver* solver, WINDOW *menu_win) {
     wrefresh(result_win);
     wgetch(result_win);
     delwin(result_win);
+}
+
+void compare_solutions_with_different_grids() {
+    clear();
+    double T;
+    int grid_size;
+
+    // Input T and grid size
+    echo();
+    curs_set(1);
+    mvprintw(LINES - 6, 0, "Enter total simulation time (T): ");
+    refresh();
+    scanw("%lf", &T);
+    mvprintw(LINES - 5, 0, "Enter base grid size (n): ");
+    refresh();
+    scanw("%d", &grid_size);
+    noecho();
+    curs_set(0);
+
+    int grid_size_1 = grid_size;
+    int grid_size_2 = grid_size * 10;
+    int grid_size_3 = grid_size_2 * 10;
+
+    // Create solvers
+    HeatEquationSolver* solver1 = createHeatEquationSolver(grid_size_1, grid_size_1, T);
+    HeatEquationSolver* solver2 = createHeatEquationSolver(grid_size_2, grid_size_2, T);
+    HeatEquationSolver* solver3 = createHeatEquationSolver(grid_size_3, grid_size_3, T);
+
+    if(solver1 == NULL || solver2 == NULL || solver3 == NULL){
+        mvprintw(LINES - 1, 0, "Failed to allocate memory for HeatEquationSolver.");
+        refresh();
+        getch();
+        return;
+    }
+
+    // Solve all problems
+    WINDOW *progress_win = create_progress_bar();
+    clock_t start_time = clock();
+    solve(solver1, progress_win, start_time);
+    solve(solver2, progress_win, start_time);
+    solve(solver3, progress_win, start_time);
+    finalize_progress_bar(progress_win);
+
+    // Calculate maximum differences
+    int step_12 = grid_size_2 / grid_size_1;
+    int step_23 = grid_size_3 / grid_size_2;
+    double max_difference_1 = 0.0;
+    double max_difference_2 = 0.0;
+
+    // Difference between solver1 and solver2
+    for(int j = 0; j <= solver1->m; ++j) {
+        for(int i = 0; i <= solver1->n; ++i) {
+            double diff = fabs(solver1->results[j][i] - solver2->results[j * step_12][i * step_12]);
+            if(diff > max_difference_1) {
+                max_difference_1 = diff;
+            }
+        }
+    }
+
+    // Difference between solver2 and solver3
+    for(int j = 0; j <= solver2->m; ++j) {
+        for(int i = 0; i <= solver2->n; ++i) {
+            double diff = fabs(solver2->results[j][i] - solver3->results[j * step_23][i * step_23]);
+            if(diff > max_difference_2) {
+                max_difference_2 = diff;
+            }
+        }
+    }
+
+    // Calculate error ratio
+    double error_ratio = max_difference_1 / max_difference_2;
+
+    // Display results
+    clear();
+    mvprintw(2, 2, "Maximum difference between grids %d and %d: %lf", grid_size_1, grid_size_2, max_difference_1);
+    mvprintw(3, 2, "Maximum difference between grids %d and %d: %lf", grid_size_2, grid_size_3, max_difference_2);
+    mvprintw(5, 2, "Error ratio (E(h)/E(h/10)): %lf", error_ratio);
+    mvprintw(7, 2, "If the method has an order of convergence of 2, the error ratio should be approximately 100.");
+    mvprintw(9, 2, "Press any key to continue.");
+    refresh();
+    getch();
+
+    // Free memory
+    freeHeatEquationSolver(solver1);
+    freeHeatEquationSolver(solver2);
+    freeHeatEquationSolver(solver3);
 }
 
