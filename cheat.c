@@ -62,7 +62,7 @@ int main() {
         "11. Display Data with Range Selection",
         "12. Search Data by Time",
         "13. Analyze Data",
-        "14. Compare Solutions with Different Grids"
+        "14. Compare Solutions with Different Grid Sizes" // Новый пункт меню
     };
 
     int choice = 0;
