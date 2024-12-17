@@ -26,6 +26,8 @@ void display_data_with_range(HeatEquationSolver* solver, WINDOW *menu_win);
 void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win);
 void analyze_data(HeatEquationSolver* solver, WINDOW *menu_win);
 void compare_solutions_with_different_grids();
+double calculate_max_difference(HeatEquationSolver* solverA, HeatEquationSolver* solverB, int step, int stepj);
+void find_difference_between_grids(); // New function prototype
 
 // Main function
 int main() {
@@ -47,7 +49,7 @@ int main() {
     WINDOW *menu_win = newwin(height, width, starty, startx);
     keypad(menu_win, TRUE);
 
-    #define NUM_CHOICES 14
+    #define NUM_CHOICES 15
     char *choices[NUM_CHOICES] = {
         "1. Set parameters n, m, T",
         "2. Start Computation",
@@ -62,7 +64,8 @@ int main() {
         "11. Display Data with Range Selection",
         "12. Search Data by Time",
         "13. Analyze Data",
-        "14. Compare Solutions with Different Grid Sizes" // Новый пункт меню
+        "14. Compare Solutions with Different Grid Sizes",
+        "15. Find Difference Between Two Grids" // New menu option
     };
 
     int choice = 0;
@@ -337,6 +340,10 @@ int main() {
                 else if(choice == 14) {
                     compare_solutions_with_different_grids();
                     refresh();
+                }
+                else if(choice == 15) {
+                    // Find difference between two grids
+                    find_difference_between_grids();
                 }
                 break;
             default:
@@ -872,6 +879,19 @@ void analyze_data(HeatEquationSolver* solver, WINDOW *menu_win) {
     delwin(result_win);
 }
 
+double calculate_max_difference(HeatEquationSolver* solverA, HeatEquationSolver* solverB, int step_j, int step_i) {
+    double max_difference = 0.0;
+    for(int j = 0; j <= solverA->m && j * step_j <= solverB->m; ++j) {
+        for(int i = 0; i <= solverA->n && i * step_i <= solverB->n; ++i) {
+            double diff = fabs(solverA->results[j][i] - solverB->results[j * step_j][i * step_i]);
+            if(diff > max_difference) {
+                max_difference = diff;
+            }
+        }
+    }
+    return max_difference;
+}
+
 void compare_solutions_with_different_grids() {
     clear();
     double T;
@@ -894,9 +914,9 @@ void compare_solutions_with_different_grids() {
     int grid_size_3 = grid_size_2 * 10;
 
     // Create solvers
-    HeatEquationSolver* solver1 = createHeatEquationSolver(grid_size_1, grid_size_1, T);
-    HeatEquationSolver* solver2 = createHeatEquationSolver(grid_size_2, grid_size_2, T);
-    HeatEquationSolver* solver3 = createHeatEquationSolver(grid_size_3, grid_size_3, T);
+    HeatEquationSolver* solver1 = createHeatEquationSolver(grid_size_1, grid_size, T);
+    HeatEquationSolver* solver2 = createHeatEquationSolver(grid_size_2, grid_size, T);
+    HeatEquationSolver* solver3 = createHeatEquationSolver(grid_size_3, grid_size, T);
 
     if(solver1 == NULL || solver2 == NULL || solver3 == NULL){
         mvprintw(LINES - 1, 0, "Failed to allocate memory for HeatEquationSolver.");
@@ -916,29 +936,11 @@ void compare_solutions_with_different_grids() {
     // Calculate maximum differences
     int step_12 = grid_size_2 / grid_size_1;
     int step_23 = grid_size_3 / grid_size_2;
-    double max_difference_1 = 0.0;
-    double max_difference_2 = 0.0;
-
-    // Difference between solver1 and solver2
-    for(int j = 0; j <= solver1->m; ++j) {
-        for(int i = 0; i <= solver1->n; ++i) {
-            double diff = fabs(solver1->results[j][i] - solver2->results[j * step_12][i * step_12]);
-            if(diff > max_difference_1) {
-                max_difference_1 = diff;
-            }
-        }
-    }
-
-    // Difference between solver2 and solver3
-    for(int j = 0; j <= solver2->m; ++j) {
-        for(int i = 0; i <= solver2->n; ++i) {
-            double diff = fabs(solver2->results[j][i] - solver3->results[j * step_23][i * step_23]);
-            if(diff > max_difference_2) {
-                max_difference_2 = diff;
-            }
-        }
-    }
-
+    //calculate_max_difference(solver1, solver2, step_i, 1)
+    double max_difference_1 = calculate_max_difference(solver1, solver2, 1, 10);
+    printf("Max difference 1: %lf\n", max_difference_1);
+    double max_difference_2 = calculate_max_difference(solver2, solver3, 1, 10);
+    printf("Max difference 2: %lf\n", max_difference_2);
     // Calculate error ratio
     double error_ratio = max_difference_1 / max_difference_2;
 
@@ -956,5 +958,68 @@ void compare_solutions_with_different_grids() {
     freeHeatEquationSolver(solver1);
     freeHeatEquationSolver(solver2);
     freeHeatEquationSolver(solver3);
+}
+
+void find_difference_between_grids() {
+    clear();
+    double T;
+    int grid_size1, grid_size2;
+
+    // Input T and two grid sizes
+    echo();
+    curs_set(1);
+    mvprintw(LINES - 6, 0, "Enter total simulation time (T): ");
+    refresh();
+    scanw("%lf", &T);
+    mvprintw(LINES - 5, 0, "Enter first grid size (n1): ");
+    refresh();
+    scanw("%d", &grid_size1);
+    mvprintw(LINES - 4, 0, "Enter second grid size (n2): ");
+    refresh();
+    scanw("%d", &grid_size2);
+    noecho();
+    curs_set(0);
+
+    // Validate that grid_size2 is a multiple of grid_size1
+    if (grid_size2 % grid_size1 != 0) {
+        mvprintw(LINES - 3, 0, "Error: n2 must be a multiple of n1. Press any key to continue.");
+        refresh();
+        getch();
+        return;
+    }
+
+    // Create solvers
+    HeatEquationSolver* solver1 = createHeatEquationSolver(grid_size1, grid_size1, T);
+    HeatEquationSolver* solver2 = createHeatEquationSolver(grid_size2, grid_size1, T);
+
+    if(solver1 == NULL || solver2 == NULL){
+        mvprintw(LINES - 1, 0, "Failed to allocate memory for HeatEquationSolver.");
+        refresh();
+        getch();
+        return;
+    }
+
+    // Solve both problems
+    WINDOW *progress_win = create_progress_bar();
+    clock_t start_time = clock();
+    solve(solver1, progress_win, start_time);
+    solve(solver2, progress_win, start_time);
+    finalize_progress_bar(progress_win);
+
+    // Calculate maximum difference
+    int step_j = grid_size2 / grid_size1;
+    int step_i = grid_size2 / grid_size1;
+    double max_difference = calculate_max_difference(solver1, solver2, 1, step_i);
+
+    // Display result
+    clear();
+    mvprintw(2, 2, "Maximum difference between grids %d and %d: %lf", grid_size1, grid_size2, max_difference);
+    mvprintw(4, 2, "Press any key to continue.");
+    refresh();
+    getch();
+
+    // Free memory
+    freeHeatEquationSolver(solver1);
+    freeHeatEquationSolver(solver2);
 }
 
