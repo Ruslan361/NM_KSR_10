@@ -37,3 +37,21 @@ target_link_libraries(HeatSolverTests PRIVATE HeatSolverLib gtest_main m ncurses
 
 include(GoogleTest)
 gtest_discover_tests(HeatSolverTests)
+
+# Copy show.py to the build directory
+add_custom_command(
+    TARGET HeatSolverSample POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/show.py ${CMAKE_BINARY_DIR}/show.py
+)
+
+# Create Python virtual environment and install required packages
+add_custom_target(setup_venv
+    COMMAND python3 -m venv ${CMAKE_BINARY_DIR}/venv
+    COMMAND ${CMAKE_BINARY_DIR}/venv/bin/pip install --upgrade pip
+    COMMAND ${CMAKE_BINARY_DIR}/venv/bin/pip install matplotlib pandas openpyxl numpy
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Setting up Python virtual environment"
+)
+
+# Ensure the virtual environment is set up before building the sample
+add_dependencies(HeatSolverSample setup_venv)

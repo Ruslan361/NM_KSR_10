@@ -6,7 +6,7 @@
 // Main function
 int main() {
     // setlocale(LC_ALL, "");
-    setenv("QT_QPA_PLATFORM", "xcb", 1);
+    //setenv("QT_QPA_PLATFORM", "xcb", 1);
     int n = 100;
     int m = 100;
     double T = 10.0;
@@ -107,7 +107,7 @@ int main() {
                         char command[512];
                         save_csv_format1(solver, progress_win, 0);
                         snprintf(command, sizeof(command),
-                                 "conda run -n pyside6 python ./show.py results_format1.csv False True > /dev/null");
+                                 "./venv/bin/python ./show.py results_format1.csv False True > /dev/null");
                         //clear();
 
                         int ret = system(command);
@@ -143,7 +143,7 @@ int main() {
                         char command[512];
                         save_csv_format1(solver, progress_win, 0);
                         snprintf(command, sizeof(command),
-                                 "conda run -n pyside6 python ./show.py results_format1.csv True False > /dev/null");
+                                 "./venv/bin/python ./show.py results_format1.csv True False > /dev/null");
                         int ret = system(command);
                         if (ret == -1) {
                             // Error handling
@@ -223,7 +223,7 @@ int main() {
                     // Formulate command for saving 3D plot
                     char command[512];
                     snprintf(command, sizeof(command),
-                             "conda run -n pyside6 python ./show.py results_format1.csv False False --save_3d_plot > /dev/null");
+                             "./venv/bin/python show.py --save_3d_plot --output_dir=plots results_format1.csv False False --save_3d_plot");
                     int ret = system(command);
                     if (ret == -1) {
                         // Обработка ошибки

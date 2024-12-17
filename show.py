@@ -12,7 +12,7 @@ def create_output_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def plot_heat_equation_results(csv_file, save_3d_plot=False, output_dir="plots"):
+def plot_heat_equation_results(csv_file, save_3d_plot=False, output_dir="plots", show_graph=True):
     create_output_directory(output_dir)
     
     # Load data from CSV
@@ -53,10 +53,10 @@ def plot_heat_equation_results(csv_file, save_3d_plot=False, output_dir="plots")
     # ax.plot(x_curve, t_curve, v_curve, label='u(1, t) = sin(4t)', color='green', linewidth=linewidth)
 
     # Configure plot
-    ax.set_xlabel('x')
-    ax.set_ylabel('t')
-    ax.set_zlabel('Temperature')
-    ax.set_title('Heat Equation Results')
+    ax.set_xlabel('x(Координата)')
+    ax.set_ylabel('t(Время)')
+    ax.set_zlabel('Температура')
+    ax.set_title('Результаты численного решения уравнения теплопроводности')
     #ax.legend()
 
     # Function to rotate the view clockwise
@@ -70,26 +70,28 @@ def plot_heat_equation_results(csv_file, save_3d_plot=False, output_dir="plots")
         fig.canvas.draw_idle()  # Redraw the figure
 
     # Add buttons for rotation
-    ax_button_cw = plt.axes([0.7, 0.05, 0.1, 0.075])  # Position of the clockwise button [left, bottom, width, height]
-    button_cw = Button(ax_button_cw, 'CW')
+    ax_button_cw = plt.axes([0, 0.05, 0.5, 0.075])  # Position of the clockwise button [left, bottom, width, height]
+    button_cw = Button(ax_button_cw, 'Вращать влево')
     button_cw.on_clicked(rotate_clockwise)
 
-    ax_button_ccw = plt.axes([0.8, 0.05, 0.1, 0.075])  # Position of the counterclockwise button [left, bottom, width, height]
-    button_ccw = Button(ax_button_ccw, 'CCW')
+    ax_button_ccw = plt.axes([0.5, 0.05, 0.5, 0.075])  # Position of the counterclockwise button [left, bottom, width, height]
+    button_ccw = Button(ax_button_ccw, 'Вращать вправо')
     button_ccw.on_clicked(rotate_counterclockwise)
-    
+    #fig = plt.figure()
+    #fig.canvas.set_window_title('Результаты численного решения уравнения теплопроводности')
     if save_3d_plot:
         plt.savefig(os.path.join(output_dir, "3d_plot.png"))
-    
-    plt.show()
+    if show_graph:
+        plt.show()
+    # plt.show()
 
 def plot_individual_layer(df, x_idx, filename):
     layer = df[df['x'] == x_idx].sort_values(by='t')
     plt.figure(figsize=(10, 6))
     plt.plot(layer['t'], layer['v'])
-    plt.xlabel("Time")
-    plt.ylabel("Temperature")
-    plt.title(f"Layer x={x_idx}")
+    plt.xlabel("Время")
+    plt.ylabel("Температура")
+    plt.title(f"Слой x={x_idx}")
     plt.grid()
     plt.savefig(filename)
     plt.close()
@@ -101,11 +103,11 @@ def plot_first_and_last_layers(df, filename):
 
     for x_value in selected_indices:
         layer = df[df['x'] == x_value].sort_values(by='t')
-        plt.plot(layer['t'], layer['v'], label=f"Layer x={x_value}")
+        plt.plot(layer['t'], layer['v'], label=f"Слой x={x_value}")
 
-    plt.xlabel("Time")
-    plt.ylabel("Temperature")
-    plt.title("First and Last 5 Layers")
+    plt.xlabel("Время")
+    plt.ylabel("Температура")
+    plt.title("Первые и последние 5 слоёв")
     plt.legend()
     plt.grid()
     plt.savefig(filename)
@@ -115,9 +117,9 @@ def plot_individual_time_slice(df, t_idx, filename):
     slice = df[df['t'] == t_idx].sort_values(by='x')
     plt.figure(figsize=(10, 6))
     plt.plot(slice['x'], slice['v'])
-    plt.xlabel("Position (x)")
-    plt.ylabel("Temperature")
-    plt.title(f"Time slice t={t_idx}")
+    plt.xlabel("Координата (x)")
+    plt.ylabel("Температура")
+    plt.title(f"Слой t={t_idx}")
     plt.grid()
     plt.savefig(filename)
     plt.close()
@@ -133,8 +135,8 @@ def save_results_and_plots_to_excel(filename, output_dir="plots"):
 
     with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
         pivot_df.to_excel(writer, sheet_name="Overview", float_format="%.6f")
-        pd.DataFrame().to_excel(writer, sheet_name="Individual Plots")
-        pd.DataFrame().to_excel(writer, sheet_name="Time Slices")
+        pd.DataFrame().to_excel(writer, sheet_name="Графики")
+        pd.DataFrame().to_excel(writer, sheet_name="Срезы по времени")
 
     wb = openpyxl.load_workbook(excel_file)
 
@@ -142,11 +144,11 @@ def save_results_and_plots_to_excel(filename, output_dir="plots"):
     plot_image = os.path.join(output_dir, "overview_plot.png")
     plot_first_and_last_layers(df, plot_image)
     img = Image(plot_image)
-    img.anchor = "A15"
+    img.anchor = "A20"
     sheet.add_image(img)
 
-    sheet = wb["Individual Plots"]
-    row_offset = 1
+    sheet = wb["Графики"]
+    row_offset = 10
 
     unique_x = df['x'].unique()
     selected_x_values = np.concatenate([unique_x[:5], unique_x[-5:]])
@@ -159,7 +161,7 @@ def save_results_and_plots_to_excel(filename, output_dir="plots"):
         sheet.add_image(img)
         row_offset += 20
 
-    sheet = wb["Time Slices"]
+    sheet = wb["Срезы по времени"]
     row_offset = 1
 
     unique_t = df['t'].unique()
@@ -184,8 +186,10 @@ if __name__ == "__main__":
     parser.add_argument("--save_3d_plot", action="store_true", help="save 3D plot")
     parser.add_argument("--output_dir", type=str, default="plots", help="directory to save plots")
     args = parser.parse_args()
-    print(args)
+    #print(args)
     if args.show_graph == "True":
         plot_heat_equation_results(args.file, args.save_3d_plot, args.output_dir)
+    else:
+        plot_heat_equation_results(args.file, True, args.output_dir, False)
     if args.save_excel == "True": 
         save_results_and_plots_to_excel(args.file, args.output_dir)
