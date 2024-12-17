@@ -1,8 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <omp.h>
-#include "heat_solver.h"
+
 //#define OMP_NUM_THREADS = 1
 
 using namespace std;

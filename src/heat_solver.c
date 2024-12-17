@@ -132,15 +132,7 @@ void solve(HeatEquationSolver* solver, WINDOW* win, clock_t start_time) {
     }
 }
 
-// Function to print the results
-void print_results(HeatEquationSolver* solver) {
-    for (int j = 0; j <= solver->m; ++j) {
-        for (int i = 0; i <= solver->n; ++i) {
-            printf("%f ", solver->results[j][i]);
-        }
-        printf("\n");
-    }
-}
+
 
 // int main() {
 //     int n = 100;

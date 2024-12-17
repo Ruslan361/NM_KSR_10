@@ -1,4 +1,5 @@
-
+#ifndef HEAT_SOLVER_H
+#define HEAT_SOLVER_H
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -27,3 +28,4 @@ void calculate_coefficients(HeatEquationSolver* solver, double *a, double *b, do
 void print_results(HeatEquationSolver* solver);
 void solve(HeatEquationSolver* solver, WINDOW* win, clock_t start_time);
 void update_progress_bar(WINDOW *win, float progress, double remaining_time);
+#endif
