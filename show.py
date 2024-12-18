@@ -134,20 +134,20 @@ def save_results_and_plots_to_excel(filename, output_dir="plots"):
     pivot_df = df.pivot(index='t', columns='x', values='v')
 
     with pd.ExcelWriter(excel_file, engine="openpyxl") as writer:
-        pivot_df.to_excel(writer, sheet_name="Overview", float_format="%.6f")
-        pd.DataFrame().to_excel(writer, sheet_name="Графики")
+        pivot_df.to_excel(writer, sheet_name="Результаты вычисления", float_format="%.6f")
+        pd.DataFrame().to_excel(writer, sheet_name="Срезы по x")
         pd.DataFrame().to_excel(writer, sheet_name="Срезы по времени")
 
     wb = openpyxl.load_workbook(excel_file)
 
-    sheet = wb["Overview"]
+    sheet = wb["Результаты вычисления"]
     plot_image = os.path.join(output_dir, "overview_plot.png")
     plot_first_and_last_layers(df, plot_image)
     img = Image(plot_image)
-    img.anchor = "A20"
+    img.anchor = "A40"
     sheet.add_image(img)
 
-    sheet = wb["Графики"]
+    sheet = wb["Срезы по x"]
     row_offset = 10
 
     unique_x = df['x'].unique()
@@ -159,7 +159,7 @@ def save_results_and_plots_to_excel(filename, output_dir="plots"):
         img = Image(plot_image)
         img.anchor = f"A{row_offset}"
         sheet.add_image(img)
-        row_offset += 20
+        row_offset += 40
 
     sheet = wb["Срезы по времени"]
     row_offset = 1

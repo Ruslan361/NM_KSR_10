@@ -3,13 +3,12 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ncurses.h>
-// #include <locale.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h> // Добавьте эту строку
+#include <unistd.h>
 #define MAX_FILENAME_LEN 256
 
-// Initialize ncurses settings
+// Инициализация настроек ncurses
 void initialize_ncurses() {
     initscr();
     clear();
@@ -19,14 +18,14 @@ void initialize_ncurses() {
 
     if (has_colors() == FALSE) {
         endwin();
-        printf("Your terminal does not support colors.\n");
+        printf("Ваш терминал не поддерживает цвета.\n");
         exit(1);
     }
     start_color();
     init_pair(1, COLOR_GREEN, COLOR_BLACK);
 }
 
-// Print the menu with current parameters
+// Печать меню с текущими параметрами
 void print_menu(WINDOW *menu_win, int highlight, char *choices[], int n_choices, int n, int m, double T) {
     int x = 2, y = 2;
     box(menu_win, 0, 0);
@@ -40,15 +39,15 @@ void print_menu(WINDOW *menu_win, int highlight, char *choices[], int n_choices,
         }
         ++y;
     }
-    // Display current parameters
-    mvwprintw(menu_win, y + 1, x, "Current parameters:");
-    mvwprintw(menu_win, y + 2, x, "n = %d", n);
-    mvwprintw(menu_win, y + 3, x, "m = %d", m);
-    mvwprintw(menu_win, y + 4, x, "T = %.2f", T);
+    // Отображение текущих параметров
+    mvwprintw(menu_win, y + 1, x, "Текущие параметры:");
+    mvwprintw(menu_win, y + 2, x, "Число узлов по оси x n = %d", n);
+    mvwprintw(menu_win, y + 3, x, "Число узлов по оси t m = %d", m);
+    mvwprintw(menu_win, y + 4, x, "Конечное время T = %.2f", T);
     wrefresh(menu_win);
 }
 
-// Create a progress bar window
+// Создание окна индикатора прогресса
 WINDOW* create_progress_bar() {
     int height = 5, width = 70;
     int starty = (LINES - height) / 2;
@@ -57,23 +56,23 @@ WINDOW* create_progress_bar() {
     keypad(win, TRUE);
     box(win, 0, 0);
     wattron(win, COLOR_PAIR(1));
-    mvwprintw(win, 1, 2, "Progress: [>                         ] 0%% Estimated time: Calculating...");
+    mvwprintw(win, 1, 2, "Прогресс: [>                         ] 0%% Оставшееся время: Расчет...");
     wattroff(win, COLOR_PAIR(1));
     wrefresh(win);
     return win;
 }
 
-// Update the progress bar
+// Обновление индикатора прогресса
 void update_progress_bar(WINDOW *win, float progress, double remaining_time) {
     int width = 30;
     int pos = (int)(progress * width);
     int percent = (int)(progress * 100);
 
-    // Clear previous progress bar
+    // Очистка предыдущего индикатора прогресса
     mvwprintw(win, 1, 2, "                                                                               ");
     
-    // Draw progress bar
-    mvwprintw(win, 1, 2, "Progress: [");
+    // Отрисовка индикатора прогресса
+    mvwprintw(win, 1, 2, "Прогресс: [");
     for(int i = 0; i < width; ++i) {
         if(i < pos)
             waddch(win, '#');
@@ -84,19 +83,19 @@ void update_progress_bar(WINDOW *win, float progress, double remaining_time) {
     }
     waddch(win, ']');
 
-    // Display percentage and estimated time
-    mvwprintw(win, 1, 12 + width + 2, " %3d%% Estimated time: %.0f sec", percent, remaining_time);
+    // Отображение процента и оставшегося времени
+    mvwprintw(win, 1, 12 + width + 2, " %3d%% Оставшееся время: %.0f сек", percent, remaining_time);
     wrefresh(win);
 }
 
-// Finalize and clear the progress bar window
+// Завершение и очистка окна индикатора прогресса
 void finalize_progress_bar(WINDOW *win) {
     werase(win);
     wrefresh(win);
     delwin(win);
 }
 
-// Function to print the results
+// Функция для печати результатов
 void print_results(HeatEquationSolver* solver) {
     for (int j = 0; j <= solver->m; ++j) {
         for (int i = 0; i <= solver->n; ++i) {
@@ -106,14 +105,14 @@ void print_results(HeatEquationSolver* solver) {
     }
 }
 
-// Display data in Format 1
+// Отображение данных в формате 1
 void display_data_format1(HeatEquationSolver* solver, WINDOW *menu_win) {
     clear();
-    // Calculate data window size
+    // Вычисление размера окна данных
     int data_height = LINES - 4;
     int data_width = COLS - 4;
 
-    // Create a window to display data
+    // Создание окна для отображения данных
     int data_starty = 2;
     int data_startx = 2;
     WINDOW *data_win = newwin(data_height, data_width, data_starty, data_startx);
@@ -121,18 +120,18 @@ void display_data_format1(HeatEquationSolver* solver, WINDOW *menu_win) {
 
     int ch;
     int current_row = 0;
-    int max_row = solver->m; // Assuming max_row is the number of rows in the data
+    int max_row = solver->m; // Предполагается, что max_row - это количество строк в данных
 
     do {
-        // Clear the window
+        // Очистка окна
         werase(data_win);
         box(data_win, 0, 0);
 
-        // Print headers
+        // Печать заголовков
         mvwprintw(data_win, 1, 2, "t\t\tx\t\t\tv");
         mvwprintw(data_win, 2, 2, "-------------------------------------------------------------");
 
-        // Display data starting from current_row
+        // Отображение данных, начиная с current_row
         int display_row = 3;
         for(int j = current_row; j <= solver->m && display_row < data_height - 1; ++j) {
             for(int i = 0; i <= solver->n && display_row < data_height - 1; ++i) {
@@ -152,18 +151,18 @@ void display_data_format1(HeatEquationSolver* solver, WINDOW *menu_win) {
             case KEY_DOWN:
                 if(current_row < max_row) current_row++;
                 break;
-            // Handle left and right if needed
+            // Обработка клавиш влево и вправо, если необходимо
         }
-    } while(ch != 27); // ESC key to exit
+    } while(ch != 27); // Клавиша ESC для выхода
 
     delwin(data_win);
 }
 
-// Display data in Format 2
+// Отображение данных в формате 2
 void display_data_format2(HeatEquationSolver* solver, WINDOW *menu_win) {
     clear();
     if (solver == NULL) {
-        mvprintw(LINES - 1, 0, "Computation not performed. Press any key to continue.");
+        mvprintw(LINES - 1, 0, "Вычисления не выполнены. Нажмите любую клавишу для продолжения.");
         refresh();
         getch();
         return;
@@ -202,45 +201,45 @@ void display_data_with_range(HeatEquationSolver* solver, WINDOW *menu_win) {
     double start_time, end_time;
     double start_x, end_x;
 
-    // Check if computation is done
+    // Проверка, выполнены ли вычисления
     if (solver == NULL) {
-        mvprintw(LINES - 1, 0, "Computation not performed. Press any key to continue.");
+        mvprintw(LINES - 1, 0, "Вычисления не выполнены. Нажмите любую клавишу для продолжения.");
         refresh();
         getch();
         return;
     }
 
-    // Input range for t and x
+    // Ввод диапазона для t и x
     echo();
     curs_set(1);
-    mvprintw(LINES - 4, 0, "Enter start time (t_start): ");
+    mvprintw(LINES - 4, 0, "Введите начальное время (t_start): ");
     refresh();
     scanw("%lf", &start_time);
-    mvprintw(LINES - 3, 0, "Enter end time (t_end): ");
+    mvprintw(LINES - 3, 0, "Введите конечное время (t_end): ");
     refresh();
     scanw("%lf", &end_time);
-    mvprintw(LINES - 2, 0, "Enter start x (x_start): ");
+    mvprintw(LINES - 2, 0, "Введите начальное x (x_start): ");
     refresh();
     scanw("%lf", &start_x);
-    mvprintw(LINES - 1, 0, "Enter end x (x_end): ");
+    mvprintw(LINES - 1, 0, "Введите конечное x (x_end): ");
     refresh();
     scanw("%lf", &end_x);
     noecho();
     curs_set(0);
 
-    // Convert time to indices
+    // Преобразование времени в индексы
     int start_j = (int)(start_time / solver->tau);
     int end_j = (int)(end_time / solver->tau);
     int start_i = (int)(start_x / solver->h);
     int end_i = (int)(end_x / solver->h);
 
-    // Validate range
+    // Проверка диапазона
     if (start_j < 0) start_j = 0;
     if (end_j > solver->m) end_j = solver->m;
     if (start_i < 0) start_i = 0;
     if (end_i > solver->n) end_i = solver->n;
     if (start_j > end_j || start_i > end_i) {
-        mvprintw(LINES - 1, 0, "Invalid range. Press any key to continue.");
+        mvprintw(LINES - 1, 0, "Неверный диапазон. Нажмите любую клавишу для продолжения.");
         refresh();
         getch();
         return;

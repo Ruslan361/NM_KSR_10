@@ -1,21 +1,19 @@
 #include "cheat.h"
 #include "ncurses.h"
+#include <locale.h>
 
-
-
-// Main function
+// Главная функция
 int main() {
-    // setlocale(LC_ALL, "");
-    //setenv("QT_QPA_PLATFORM", "xcb", 1);
+    setlocale(LC_ALL, "");
     int n = 100;
     int m = 100;
     double T = 10.0;
     HeatEquationSolver* solver = NULL;
 
-    // Initialize ncurses
+    // Инициализация ncurses
     initialize_ncurses();
 
-    // Create menu window
+    // Создание окна меню
     int width = 80;
     int height = 26;
     int startx = (COLS - width) / 2;
@@ -25,27 +23,27 @@ int main() {
 
     #define NUM_CHOICES 15
     char *choices[NUM_CHOICES] = {
-        "1. Set parameters n, m, T",
-        "2. Start Computation",
-        "3. Draw 3D plot",
-        "4. Save to XLS",
-        "5. Save to CSV (Format 1: t, x, v)",
-        "6. Save to CSV (Format 2: t rows, x columns)",
-        "7. Save 3D plot (--save_3d_plot)",
-        "8. Display Data",
-        "9. Display Data (Format 2)",
-        "10. Exit",
-        "11. Display Data with Range Selection",
-        "12. Search Data by Time",
-        "13. Analyze Data",
-        "14. Compare Solutions with Different Grid Sizes",
-        "15. Find Difference Between Two Grids" // New menu option
+        "1. Установить параметры n, m, T",
+        "2. Начать вычисления",
+        "3. Нарисовать 3D график",
+        "4. Сохранить в XLS",
+        "5. Сохранить в CSV (Формат 1: t, x, v)",
+        "6. Сохранить в CSV (Формат 2: строки t, столбцы x)",
+        "7. Сохранить 3D график (--save_3d_plot)",
+        "8. Отобразить данные",
+        "9. Отобразить данные (Формат 2)",
+        "10. Выход",
+        "11. Отобразить данные с выбором диапазона",
+        "12. Поиск данных по времени",
+        "13. Анализ данных",
+        "14. Сравнить решения с разными размерами сетки",
+        "15. Найти разницу между двумя сетками" // Новый пункт меню
     };
 
     int choice = 0;
     int highlight = 1;
 
-    // Main loop
+    // Главный цикл
     while(1) {
         print_menu(menu_win, highlight, choices, NUM_CHOICES, n, m, T);
         int c = wgetch(menu_win);
@@ -65,24 +63,24 @@ int main() {
             case 10: // Enter
                 choice = highlight;
                 if(choice == 1) {
-                    // Set parameters
+                    // Установить параметры
                     echo();
                     curs_set(1);
-                    mvprintw(starty + height, 0, "Enter n: ");
+                    mvprintw(starty + height, 0, "Введите n: ");
                     clrtoeol();
                     refresh();
                     scanw("%d", &n);
-                    mvprintw(starty + height + 1, 0, "Enter m: ");
+                    mvprintw(starty + height + 1, 0, "Введите m: ");
                     clrtoeol();
                     refresh();
                     scanw("%d", &m);
-                    mvprintw(starty + height + 2, 0, "Enter T: ");
+                    mvprintw(starty + height + 2, 0, "Введите T: ");
                     clrtoeol();
                     refresh();
                     scanw("%lf", &T);
                     noecho();
                     curs_set(0);
-                    // Clear input
+                    // Очистить ввод
                     for(int i = 0; i < 3; ++i) {
                         move(starty + height + i, 0);
                         clrtoeol();
@@ -90,64 +88,62 @@ int main() {
                     refresh();
                 }
                 else if(choice == 2) {
-                    // Start Computation
+                    // Начать вычисления
                     start_computation(&solver, n, m, T);
                 }
                 else if(choice == 3) {
-                    // Draw 3D plotf
+                    // Нарисовать 3D график
                     if(solver == NULL){
                         WINDOW *info_win = newwin(5, 50, starty + height + 2, startx + 15);
-                        mvwprintw(info_win, 1, 1, "No data available. Please run a simulation first.");
+                        mvwprintw(info_win, 1, 1, "Нет данных. Пожалуйста, сначала выполните симуляцию.");
                         wrefresh(info_win);
                         wgetch(info_win);
                         delwin(info_win);
                     } else {
                         WINDOW *progress_win = create_progress_bar();
-                        // Formulate command for drawing
+                        // Формирование команды для рисования
                         char command[512];
                         save_csv_format1(solver, progress_win, 0);
                         snprintf(command, sizeof(command),
                                  "./venv/bin/python ./show.py results_format1.csv False True > /dev/null");
-                        //clear();
 
                         int ret = system(command);
                         if (ret == -1) {
                             // Обработка ошибки
-                            mvprintw(LINES - 1, 0, "Error executing command. Press any key to continue.");
+                            mvprintw(LINES - 1, 0, "Ошибка выполнения команды. Нажмите любую клавишу для продолжения.");
                             refresh();
                             getch();
                             return 1;
                         }
                         refresh();
-                        //getch();
                         finalize_progress_bar(progress_win);
-                        // Notify user
+                        // Уведомление пользователя
                         WINDOW *success_win = newwin(3, 50, starty + height + 2, startx + 15);
-                        mvwprintw(success_win, 1, 1, "3D plot drawn successfully.");
+                        mvwprintw(success_win, 1, 1, "3D график успешно нарисован.");
                         wrefresh(success_win);
                         wgetch(success_win);
                         delwin(success_win);
                     }
                 }
                 else if(choice == 4) {
-                    // Save to XLS
+                    // Сохранить в XLS
                     if(solver == NULL){
                         WINDOW *info_win = newwin(5, 50, starty + height + 2, startx + 15);
-                        mvwprintw(info_win, 1, 1, "No data available. Please run a simulation first.");
+                        mvwprintw(info_win, 1, 1, "Нет данных. Пожалуйста, сначала выполните симуляцию.");
                         wrefresh(info_win);
                         wgetch(info_win);
                         delwin(info_win);
                     } else {
                         WINDOW *progress_win = create_progress_bar();
-                        // Formulate command for saving to XLS
+                        // Формирование команды для сохранения в XLS
                         char command[512];
                         save_csv_format1(solver, progress_win, 0);
                         snprintf(command, sizeof(command),
                                  "./venv/bin/python ./show.py results_format1.csv True False > /dev/null");
                         int ret = system(command);
                         if (ret == -1) {
-                            // Error handling
-                            mvprintw(LINES - 1, 0, "Error executing command. Press any key to continue.");
+                            // Обработка ошибки
+                            mvprintw(LINES - 1, 0, "Ошибка выполнения команды. Нажмите любую клавишу для продолжения.");
                             refresh();
                             getch();
                             return 1;
@@ -155,110 +151,91 @@ int main() {
                         
                         finalize_progress_bar(progress_win);
                         refresh();
-                        // Notify user
+                        // Уведомление пользователя
                         WINDOW *success_win = newwin(3, 50, starty + height + 2, startx + 15);
-                        mvwprintw(success_win, 1, 1, "Data saved to XLS successfully.");
+                        mvwprintw(success_win, 1, 1, "Данные успешно сохранены в XLS.");
                         wrefresh(success_win);
                         wgetch(success_win);
                         delwin(success_win);
                     }
-                // Save to CSV (Format 1: t, x, v)
-                if(solver == NULL){
-                    WINDOW *info_win = newwin(5, 50, starty + height + 2, startx + 15);
-                    mvwprintw(info_win, 1, 1, "No data available. Please run a simulation first.");
-                    wrefresh(info_win);
-                    wgetch(info_win);
-                    delwin(info_win);
-                } else {
-                    WINDOW *progress_win = create_progress_bar();
-                    save_csv_format1(solver, progress_win, 0);
-                    finalize_progress_bar(progress_win);
-                    // Notify user
-                    WINDOW *success_win = newwin(3, 50, starty + height + 2, startx + 15);
-                    mvwprintw(success_win, 1, 1, "Data saved to CSV Format 1 successfully.");
-                    wrefresh(success_win);
-                    wgetch(success_win);
-                    delwin(success_win);
-                }
                 }
                 else if(choice == 5) {
-                    // Save to CSV (Format 1: t, x, v)
+                    // Сохранить в CSV (Формат 1: t, x, v)
                     if(solver == NULL){
                         start_computation(&solver, n, m, T);
                     }
                     WINDOW *progress_win = create_progress_bar();
                     save_csv_format1(solver, progress_win, 1);
                     finalize_progress_bar(progress_win);
-                    // Notify user
+                    // Уведомление пользователя
                     WINDOW *success_win = newwin(3, 50, starty + height + 2, startx + 15);
-                    mvwprintw(success_win, 1, 1, "Data saved to CSV Format 1 successfully.");
+                    mvwprintw(success_win, 1, 1, "Данные успешно сохранены в CSV Формат 1.");
                     wrefresh(success_win);
                     wgetch(success_win);
                     delwin(success_win);
                 }
                 else if(choice == 6) {
-                    // Save to CSV (Format 2: t rows, x columns)
+                    // Сохранить в CSV (Формат 2: строки t, столбцы x)
                     if(solver == NULL){
                         start_computation(&solver, n, m, T);
                     }
                     WINDOW *progress_win = create_progress_bar();
                     save_csv_format2(solver, progress_win);
                     finalize_progress_bar(progress_win);
-                    // Notify user
+                    // Уведомление пользователя
                     WINDOW *success_win = newwin(3, 50, starty + height + 2, startx + 15);
-                    mvwprintw(success_win, 1, 1, "Data saved to CSV Format 2 successfully.");
+                    mvwprintw(success_win, 1, 1, "Данные успешно сохранены в CSV Формат 2.");
                     wrefresh(success_win);
                     wgetch(success_win);
                     delwin(success_win);
                 }
                 else if(choice == 7) {
-                    // Save 3D plot
+                    // Сохранить 3D график
                     if(solver == NULL){
                         start_computation(&solver, n, m, T);
                     }
-                    //save_csv_format1(solver, NULL, 0);
                     WINDOW *progress_win = create_progress_bar();
                     save_csv_format1(solver, progress_win, 0);
                     finalize_progress_bar(progress_win);
-                    // Formulate command for saving 3D plot
+                    // Формирование команды для сохранения 3D графика
                     char command[512];
                     snprintf(command, sizeof(command),
                              "./venv/bin/python show.py --save_3d_plot --output_dir=plots results_format1.csv False False --save_3d_plot");
                     int ret = system(command);
                     if (ret == -1) {
                         // Обработка ошибки
-                        mvprintw(LINES - 1, 0, "Error executing command. Press any key to continue.");
+                        mvprintw(LINES - 1, 0, "Ошибка выполнения команды. Нажмите любую клавишу для продолжения.");
                         refresh();
                         getch();
                         return 1;
                     }
                     refresh();
-                    // Notify user
+                    // Уведомление пользователя
                     WINDOW *success_win = newwin(3, 50, starty + height + 2, startx + 15);
-                    mvwprintw(success_win, 1, 1, "3D plot saved successfully.");
+                    mvwprintw(success_win, 1, 1, "3D график успешно сохранен.");
                     wrefresh(success_win);
                     wgetch(success_win);
                     delwin(success_win);
                 }
                 else if(choice == 8) {
-                    // Display Data Format 1
+                    // Отобразить данные Формат 1
                     if(solver == NULL){
                         WINDOW *info_win = newwin(5, 50, starty + height + 2, startx + 15);
-                        mvwprintw(info_win, 1, 1, "No data available. Please run a simulation first.");
+                        mvwprintw(info_win, 1, 1, "Нет данных. Пожалуйста, сначала выполните симуляцию.");
                         wrefresh(info_win);
                         wgetch(info_win);
                         delwin(info_win);
                     } else {
                         display_data_format1(solver, menu_win);
-                        // Redraw menu after displaying data
+                        // Перерисовка меню после отображения данных
                         werase(menu_win);
                         refresh();
                     }
                 }
                 else if(choice == 9) {
-                    // Display Data Format 2
+                    // Отобразить данные Формат 2
                     if(solver == NULL) {
-                        mvprintw(LINES - 1, 0, "Computation not performed. Press any key to continue.");
+                        mvprintw(LINES - 1, 0, "Вычисления не выполнены. Нажмите любую клавишу для продолжения.");
                         refresh();
                         getch();
                         return 1;
@@ -292,12 +269,12 @@ int main() {
                     refresh();
                 }
                 else if(choice == 10) {
-                    // Exit
+                    // Выход
                     if(solver != NULL){
                         freeHeatEquationSolver(solver);
                     }
                     endwin();
-                    return 0; // Изменено с return;
+                    return 0;
                 }
                 else if(choice == 11) {
                     display_data_with_range(solver, menu_win);
@@ -316,7 +293,7 @@ int main() {
                     refresh();
                 }
                 else if(choice == 15) {
-                    // Find difference between two grids
+                    // Найти разницу между двумя сетками
                     find_difference_between_grids();
                 }
                 break;

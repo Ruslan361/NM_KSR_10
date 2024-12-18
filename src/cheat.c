@@ -1,19 +1,17 @@
 #include "cheat.h"
 
-
-
-// Save CSV in format t, x, v
+// Сохранение CSV в формате t, x, v
 void save_csv_format1(HeatEquationSolver* solver, WINDOW *progress_win, int comments) {
     FILE* fp = fopen("results_format1.csv", "w");
     if(fp == NULL) {
-        fprintf(stderr, "Error opening file for writing.\n");
+        fprintf(stderr, "Ошибка открытия файла для записи.\n");
         return;
     }
     if (comments){
-        // Write headers with time and step
-        fprintf(fp, "# Time: %e\n", solver->T);
-        fprintf(fp, "# Step size (h): %e\n", solver->h);
-        fprintf(fp, "# Step size (tau): %e\n", solver->tau);
+        // Запись заголовков с временем и шагом
+        fprintf(fp, "# T: %e\n", solver->T);
+        fprintf(fp, "# h: %e\n", solver->h);
+        fprintf(fp, "# tau: %e\n", solver->tau);
     }
     fprintf(fp, "t,x,v\n");
     for(int j = 0; j <= solver->m; ++j) {
@@ -22,25 +20,25 @@ void save_csv_format1(HeatEquationSolver* solver, WINDOW *progress_win, int comm
             double x_val = i * solver->h;
             fprintf(fp, "%e,%e,%e\n", t_val, x_val, solver->results[j][i]);
         }
-        // Update progress bar
+        // Обновление индикатора прогресса
         float progress = (float)j / solver->m;
         update_progress_bar(progress_win, progress, 0);
     }
     fclose(fp);
 }
 
-// Save CSV in format with t rows and x columns
+// Сохранение CSV в формате с строками t и столбцами x
 void save_csv_format2(HeatEquationSolver* solver, WINDOW *progress_win) {
     FILE* fp = fopen("results_format2.csv", "w");
     if(fp == NULL) {
-        fprintf(stderr, "Error opening file for writing.\n");
+        fprintf(stderr, "Ошибка открытия файла для записи.\n");
         return;
     }
-    // Write headers with time and step
-    fprintf(fp, "# Time: %e\n", solver->T);
-    fprintf(fp, "# Step size (h): %e\n", solver->h);
-    fprintf(fp, "# Step size (tau): %e\n", solver->tau);
-    // Write x values as columns
+    // Запись заголовков с временем и шагом
+    fprintf(fp, "# Время: %e\n", solver->T);
+    fprintf(fp, "# Размер шага (h): %e\n", solver->h);
+    fprintf(fp, "# Размер шага (tau): %e\n", solver->tau);
+    // Запись значений x как столбцов
     fprintf(fp, "t");
     for(int i = 0; i <= solver->n; ++i) {
         double x_val = i * solver->h;
@@ -54,24 +52,22 @@ void save_csv_format2(HeatEquationSolver* solver, WINDOW *progress_win) {
             fprintf(fp, ",%e", solver->results[j][i]);
         }
         fprintf(fp, "\n");
-        // Update progress bar
+        // Обновление индикатора прогресса
         float progress = (float)j / solver->m;
         update_progress_bar(progress_win, progress, 0);
     }
     fclose(fp);
 }
 
-
-
-// Function to handle solver allocation error
+// Функция для обработки ошибки выделения памяти для решателя
 void handle_solver_error() {
     WINDOW *error_win = newwin(3, 50, (LINES - 3) / 2, (COLS - 50) / 2);
-    mvwprintw(error_win, 1, 1, "Failed to allocate HeatEquationSolver.");
+    mvwprintw(error_win, 1, 1, "Не удалось выделить память для HeatEquationSolver.");
     wrefresh(error_win);
     wgetch(error_win);
 }
 
-// Function to create a new solver instance
+// Функция для создания нового экземпляра решателя
 HeatEquationSolver* initialize_solver(int n, int m, double T) {
     HeatEquationSolver* solver = createHeatEquationSolver(n, m, T);
     if(solver == NULL){
@@ -80,7 +76,7 @@ HeatEquationSolver* initialize_solver(int n, int m, double T) {
     return solver;
 }
 
-// Updated start_computation function
+// Обновленная функция start_computation
 void start_computation(HeatEquationSolver** solver_ptr, int n, int m, double T) {
     if(*solver_ptr != NULL){
         freeHeatEquationSolver(*solver_ptr);
@@ -91,30 +87,28 @@ void start_computation(HeatEquationSolver** solver_ptr, int n, int m, double T) 
         return;
     }
 
-    // Create progress bar
+    // Создание индикатора прогресса
     WINDOW *progress_win = create_progress_bar();
 
-    // Start solving
+    // Начало решения
     clock_t start_time = clock();
     solve(*solver_ptr, progress_win, start_time);
 
-    // Finalize progress bar
+    // Завершение индикатора прогресса
     finalize_progress_bar(progress_win);
 
-    // Notify user of completion
+    // Уведомление пользователя о завершении
     WINDOW *success_win = newwin(3, 50, (LINES - 3) / 2, (COLS - 50) / 2);
-    mvwprintw(success_win, 1, 1, "Computation completed successfully.");
+    mvwprintw(success_win, 1, 1, "Вычисления успешно завершены.");
     wrefresh(success_win);
     wgetch(success_win);
     delwin(success_win);
 }
 
-
-
 void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
     clear();
     if (solver == NULL) {
-        mvprintw(LINES - 1, 0, "Computation not performed. Press any key to continue.");
+        mvprintw(LINES - 1, 0, "Вычисления не выполнены. Нажмите любую клавишу для продолжения.");
         refresh();
         getch();
         return;
@@ -123,27 +117,27 @@ void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
     double t_query;
     int N;
 
-    // Input time and number of nearest steps
+    // Ввод времени и количества ближайших шагов
     echo();
     curs_set(1);
-    mvprintw(LINES - 4, 0, "Enter query time (t): ");
+    mvprintw(LINES - 4, 0, "Введите время запроса (t): ");
     refresh();
     scanw("%lf", &t_query);
-    mvprintw(LINES - 3, 0, "Enter number of nearest steps (N): ");
+    mvprintw(LINES - 3, 0, "Введите количество ближайших шагов (N): ");
     refresh();
     scanw("%d", &N);
     noecho();
     curs_set(0);
 
-    // Validate N
+    // Проверка N
     if (N <= 0 || N > solver->m + 1) {
-        mvprintw(LINES - 1, 0, "Invalid N. Press any key to continue.");
+        mvprintw(LINES - 1, 0, "Неверное значение N. Нажмите любую клавишу для продолжения.");
         refresh();
         getch();
         return;
     }
 
-    // Find N nearest time steps
+    // Поиск N ближайших временных шагов
     typedef struct {
         int index;
         double diff;
@@ -155,7 +149,7 @@ void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
         diffs[j].diff = fabs(j * solver->tau - t_query);
     }
 
-    // Sort by ascending difference
+    // Сортировка по возрастанию разницы
     for(int i = 0; i < solver->m; ++i) {
         for(int j = i + 1; j <= solver->m; ++j) {
             if(diffs[i].diff > diffs[j].diff) {
@@ -166,13 +160,13 @@ void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
         }
     }
 
-    // Select N nearest
+    // Выбор N ближайших
     int* selected_indices = malloc(N * sizeof(int));
     for(int i = 0; i < N; ++i) {
         selected_indices[i] = diffs[i].index;
     }
 
-    // Sort selected by t
+    // Сортировка выбранных по t
     for(int i = 0; i < N - 1; ++i) {
         for(int j = i + 1; j < N; ++j) {
             if(selected_indices[i] > selected_indices[j]) {
@@ -183,7 +177,7 @@ void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
         }
     }
 
-    // Create a window to display data
+    // Создание окна для отображения данных
     int data_height = LINES - 6;
     int data_width = COLS - 6;
     int data_starty = 3;
@@ -191,13 +185,13 @@ void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
     WINDOW *data_win = newwin(data_height, data_width, data_starty, data_startx);
     box(data_win, 0, 0);
 
-    // Headers with increased spacing
+    // Заголовки с увеличенными отступами
     mvwprintw(data_win, 1, 2, "t\\x");
     for(int i = 0; i <= solver->n; ++i) {
         mvwprintw(data_win, 1, 15 + i * 20, "%.2e", i * solver->h);
     }
 
-    // Display data
+    // Отображение данных
     for(int k = 0; k < N && (k + 2) < data_height; ++k) {
         int j = selected_indices[k];
         mvwprintw(data_win, k + 2, 2, "%.2e", j * solver->tau);
@@ -208,10 +202,10 @@ void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
 
     wrefresh(data_win);
 
-    // Navigation and exit
+    // Навигация и выход
     int ch;
     while((ch = wgetch(data_win)) != 'q' && ch != 'Q') {
-        // Navigation handling can be added if needed
+        // Можно добавить обработку навигации, если необходимо
     }
 
     werase(data_win);
@@ -224,7 +218,7 @@ void search_data_by_time(HeatEquationSolver* solver, WINDOW *menu_win) {
 
 void analyze_data(HeatEquationSolver* solver, WINDOW *menu_win) {
     if (solver == NULL) {
-        mvprintw(LINES - 1, 0, "Computation not performed. Press any key to continue.");
+        mvprintw(LINES - 1, 0, "Вычисления не выполнены. Нажмите любую клавишу для продолжения.");
         refresh();
         getch();
         return;
@@ -255,13 +249,13 @@ void analyze_data(HeatEquationSolver* solver, WINDOW *menu_win) {
     double t_min = j_min * solver->tau;
     double x_min = i_min * solver->h;
 
-    // Create a window to display analysis results
+    // Создание окна для отображения результатов анализа
     WINDOW *result_win = newwin(12, 60, (LINES - 12) / 2, (COLS - 60) / 2);
     box(result_win, 0, 0);
-    mvwprintw(result_win, 1, 2, "Analysis Results:");
-    mvwprintw(result_win, 3, 2, "Maximum value: %.2e at (t=%.2e, x=%.2e)", v_max, t_max, x_max);
-    mvwprintw(result_win, 4, 2, "Minimum value: %.2e at (t=%.2e, x=%.2e)", v_min, t_min, x_min);
-    mvwprintw(result_win, 6, 2, "Computation parameters:");
+    mvwprintw(result_win, 1, 2, "Результаты анализа:");
+    mvwprintw(result_win, 3, 2, "Максимальное значение: %.2e при (t=%.2e, x=%.2e)", v_max, t_max, x_max);
+    mvwprintw(result_win, 4, 2, "Минимальное значение: %.2e при (t=%.2e, x=%.2e)", v_min, t_min, x_min);
+    mvwprintw(result_win, 6, 2, "Параметры вычислений:");
     mvwprintw(result_win, 7, 4, "N = %d", solver->n);
     mvwprintw(result_win, 8, 4, "M = %d", solver->m);
     mvwprintw(result_win, 9, 4, "T = %.2e", solver->T);
@@ -290,13 +284,13 @@ void compare_solutions_with_different_grids() {
     double T;
     int grid_size;
 
-    // Input T and grid size
+    // Ввод T и размера сетки
     echo();
     curs_set(1);
-    mvprintw(LINES - 6, 0, "Enter total simulation time (T): ");
+    mvprintw(LINES - 6, 0, "Введите общее время симуляции (T): ");
     refresh();
     scanw("%lf", &T);
-    mvprintw(LINES - 5, 0, "Enter base grid size (n): ");
+    mvprintw(LINES - 5, 0, "Введите базовый размер сетки (n): ");
     refresh();
     scanw("%d", &grid_size);
     noecho();
@@ -306,19 +300,19 @@ void compare_solutions_with_different_grids() {
     int grid_size_2 = grid_size * 10;
     int grid_size_3 = grid_size_2 * 10;
 
-    // Create solvers
+    // Создание решателей
     HeatEquationSolver* solver1 = createHeatEquationSolver(grid_size_1, grid_size, T);
     HeatEquationSolver* solver2 = createHeatEquationSolver(grid_size_2, grid_size, T);
     HeatEquationSolver* solver3 = createHeatEquationSolver(grid_size_3, grid_size, T);
 
     if(solver1 == NULL || solver2 == NULL || solver3 == NULL){
-        mvprintw(LINES - 1, 0, "Failed to allocate memory for HeatEquationSolver.");
+        mvprintw(LINES - 1, 0, "Не удалось выделить память для HeatEquationSolver.");
         refresh();
         getch();
         return;
     }
 
-    // Solve all problems
+    // Решение всех задач
     WINDOW *progress_win = create_progress_bar();
     clock_t start_time = clock();
     solve(solver1, progress_win, start_time);
@@ -326,28 +320,27 @@ void compare_solutions_with_different_grids() {
     solve(solver3, progress_win, start_time);
     finalize_progress_bar(progress_win);
 
-    // Calculate maximum differences
+    // Вычисление максимальных разниц
     int step_12 = grid_size_2 / grid_size_1;
     int step_23 = grid_size_3 / grid_size_2;
-    //calculate_max_difference(solver1, solver2, step_i, 1)
     double max_difference_1 = calculate_max_difference(solver1, solver2, 1, 10);
-    printf("Max difference 1: %lf\n", max_difference_1);
+    printf("Максимальная разница 1: %lf\n", max_difference_1);
     double max_difference_2 = calculate_max_difference(solver2, solver3, 1, 10);
-    printf("Max difference 2: %lf\n", max_difference_2);
-    // Calculate error ratio
+    printf("Максимальная разница 2: %lf\n", max_difference_2);
+    // Вычисление отношения ошибок
     double error_ratio = max_difference_1 / max_difference_2;
 
-    // Display results
+    // Отображение результатов
     clear();
-    mvprintw(2, 2, "Maximum difference between grids %d and %d: %lf", grid_size_1, grid_size_2, max_difference_1);
-    mvprintw(3, 2, "Maximum difference between grids %d and %d: %lf", grid_size_2, grid_size_3, max_difference_2);
-    mvprintw(5, 2, "Error ratio (E(h)/E(h/10)): %lf", error_ratio);
-    mvprintw(7, 2, "If the method has an order of convergence of 2, the error ratio should be approximately 100.");
-    mvprintw(9, 2, "Press any key to continue.");
+    mvprintw(2, 2, "Максимальная разница между сетками %d и %d: %lf", grid_size_1, grid_size_2, max_difference_1);
+    mvprintw(3, 2, "Максимальная разница между сетками %d и %d: %lf", grid_size_2, grid_size_3, max_difference_2);
+    mvprintw(5, 2, "Отношение ошибок (E(h)/E(h/10)): %lf", error_ratio);
+    mvprintw(7, 2, "Если метод имеет порядок сходимости 2, отношение ошибок должно быть примерно 100.");
+    mvprintw(9, 2, "Нажмите любую клавишу для продолжения.");
     refresh();
     getch();
 
-    // Free memory
+    // Освобождение памяти
     freeHeatEquationSolver(solver1);
     freeHeatEquationSolver(solver2);
     freeHeatEquationSolver(solver3);
@@ -358,60 +351,60 @@ void find_difference_between_grids() {
     double T;
     int grid_size1, grid_size2;
 
-    // Input T and two grid sizes
+    // Ввод T и двух размеров сетки
     echo();
     curs_set(1);
-    mvprintw(LINES - 6, 0, "Enter total simulation time (T): ");
+    mvprintw(LINES - 6, 0, "Введите общее время симуляции (T): ");
     refresh();
     scanw("%lf", &T);
-    mvprintw(LINES - 5, 0, "Enter first grid size (n1): ");
+    mvprintw(LINES - 5, 0, "Введите первый размер сетки (n1): ");
     refresh();
     scanw("%d", &grid_size1);
-    mvprintw(LINES - 4, 0, "Enter second grid size (n2): ");
+    mvprintw(LINES - 4, 0, "Введите второй размер сетки (n2): ");
     refresh();
     scanw("%d", &grid_size2);
     noecho();
     curs_set(0);
 
-    // Validate that grid_size2 is a multiple of grid_size1
+    // Проверка, что grid_size2 является кратным grid_size1
     if (grid_size2 % grid_size1 != 0) {
-        mvprintw(LINES - 3, 0, "Error: n2 must be a multiple of n1. Press any key to continue.");
+        mvprintw(LINES - 3, 0, "Ошибка: n2 должен быть кратным n1. Нажмите любую клавишу для продолжения.");
         refresh();
         getch();
         return;
     }
 
-    // Create solvers
+    // Создание решателей
     HeatEquationSolver* solver1 = createHeatEquationSolver(grid_size1, grid_size1, T);
     HeatEquationSolver* solver2 = createHeatEquationSolver(grid_size2, grid_size1, T);
 
     if(solver1 == NULL || solver2 == NULL){
-        mvprintw(LINES - 1, 0, "Failed to allocate memory for HeatEquationSolver.");
+        mvprintw(LINES - 1, 0, "Не удалось выделить память для HeatEquationSolver.");
         refresh();
         getch();
         return;
     }
 
-    // Solve both problems
+    // Решение обеих задач
     WINDOW *progress_win = create_progress_bar();
     clock_t start_time = clock();
     solve(solver1, progress_win, start_time);
     solve(solver2, progress_win, start_time);
     finalize_progress_bar(progress_win);
 
-    // Calculate maximum difference
+    // Вычисление максимальной разницы
     int step_j = grid_size2 / grid_size1;
     int step_i = grid_size2 / grid_size1;
     double max_difference = calculate_max_difference(solver1, solver2, 1, step_i);
 
-    // Display result
+    // Отображение результата
     clear();
-    mvprintw(2, 2, "Maximum difference between grids %d and %d: %lf", grid_size1, grid_size2, max_difference);
-    mvprintw(4, 2, "Press any key to continue.");
+    mvprintw(2, 2, "Максимальная разница между сетками %d и %d: %lf", grid_size1, grid_size2, max_difference);
+    mvprintw(4, 2, "Нажмите любую клавишу для продолжения.");
     refresh();
     getch();
 
-    // Free memory
+    // Освобождение памяти
     freeHeatEquationSolver(solver1);
     freeHeatEquationSolver(solver2);
 }
